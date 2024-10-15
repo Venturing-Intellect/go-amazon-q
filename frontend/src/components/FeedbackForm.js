@@ -6,17 +6,20 @@ function FeedbackForm() {
     const [email, setEmail] = useState('');
     const [feedback, setFeedback] = useState('');
     const [message, setMessage] = useState('');
+    const [isError, setIsError] = useState(false);
   
     const handleSubmit = async (e) => {
       e.preventDefault();
       try {
         const response = await axios.post('http://localhost:8080/feedback', { name, email, feedback });
         setMessage('Feedback submitted successfully!');
+        setIsError(false);
         setName('');
         setEmail('');
         setFeedback('');
       } catch (error) {
         setMessage('Error submitting feedback. Please try again.');
+        setIsError(true);
       }
     };
   
@@ -58,11 +61,14 @@ function FeedbackForm() {
             </div>
             <button type="submit" className="btn btn-primary">Submit Feedback</button>
           </form>
-          {message && <div className="alert alert-info mt-3">{message}</div>}
+          {message && (
+            <div className={`alert mt-3 ${isError ? 'alert-danger' : 'alert-success'}`}>
+              {message}
+            </div>
+          )}
         </div>
       </div>
     );
   }
-  
   
 export default FeedbackForm;

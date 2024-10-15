@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"regexp"
+	"strings"
 )
 
 type FeedbackRepository interface {
@@ -40,7 +41,41 @@ func (s *FeedbackService) SubmitFeedback(input FeedbackInput) error {
 }
 
 func isValidEmail(email string) bool {
-	pattern := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
-	regex := regexp.MustCompile(pattern)
-	return regex.MatchString(email)
+	// More restrictive regex
+	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+
+	if !emailRegex.MatchString(email) {
+		return false
+	}
+
+	// Additional checks
+	parts := strings.Split(email, "@")
+	if len(parts) != 2 {
+		return false
+	}
+
+	local, domain := parts[0], parts[1]
+
+	// Check local part
+	if strings.HasPrefix(local, ".") || strings.HasSuffix(local, ".") || strings.Contains(local, "..") {
+		return false
+	}
+
+	// Disallow '+' in local part
+	if strings.Contains(local, "+") {
+		return false
+	}
+
+	// Check domain part
+	if strings.HasPrefix(domain, "[") && strings.HasSuffix(domain, "]") {
+		return false // Disallow IP addresses in domain
+	}
+
+	// Ensure domain has at least one dot and the last part is at least 2 characters
+	domainParts := strings.Split(domain, ".")
+	if len(domainParts) < 2 || len(domainParts[len(domainParts)-1]) < 2 {
+		return false
+	}
+
+	return true
 }
